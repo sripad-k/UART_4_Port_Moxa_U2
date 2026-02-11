@@ -13,61 +13,51 @@
 #include <errno.h>
 
 // ============= GLOBAL CONFIGURATION =============
-#define NUM_UARTS       4       // Moxa UPort 1450-G2 has 4 ports (0-3)
+#define NUM_UARTS       4       // Configure from 1 to 12 ports
+#define MAX_UARTS       12      // Maximum supported ports
 // ================================================
 
+// Port configuration structure for easy setup
+typedef struct {
+    const char *port;
+    int baudrate;
+    int interval_ms;
+} port_config_t;
+
 // ============= USER CONFIGURATION =============
-// Using Moxa UPort 1450-G2
-#define UART1_PORT      "/dev/ttyUSB0"
-#define UART1_BAUDRATE  460800
-#define UART1_INTERVAL  10      // milliseconds
-
-#define UART2_PORT      "/dev/ttyUSB1"
-#define UART2_BAUDRATE  460800
-#define UART2_INTERVAL  10      // milliseconds
-
-#define UART3_PORT      "/dev/ttyUSB2"
-#define UART3_BAUDRATE  460800
-#define UART3_INTERVAL  10      // milliseconds
-
-#define UART4_PORT      "/dev/ttyUSB3"
-#define UART4_BAUDRATE  460800
-#define UART4_INTERVAL  10      // milliseconds
+// Configure each port here. Only the first NUM_UARTS entries will be used.
+port_config_t port_configs[MAX_UARTS] = {
+    // Port 0
+    {"/dev/ttyUSB0",  460800, 10},
+    // Port 1
+    {"/dev/ttyUSB1",  460800, 10},
+    // Port 2
+    {"/dev/ttyUSB2",  460800, 10},
+    // Port 3
+    {"/dev/ttyUSB3",  460800, 10},
+    // Port 4
+    {"/dev/ttyUSB4",  460800, 10},
+    // Port 5
+    {"/dev/ttyUSB5",  460800, 10},
+    // Port 6
+    {"/dev/ttyUSB6",  460800, 10},
+    // Port 7
+    {"/dev/ttyUSB7",  460800, 10},
+    // Port 8
+    {"/dev/ttyUSB8",  460800, 10},
+    // Port 9
+    {"/dev/ttyUSB9",  460800, 10},
+    // Port 10
+    {"/dev/ttyUSB10", 460800, 10},
+    // Port 11
+    {"/dev/ttyUSB11", 460800, 10}
+};
 // ==============================================
 
 volatile int keep_running = 1;
 
-unsigned char data1[150] = { 
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 
-    25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 
-    50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 
-    75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 
-    100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 
-    125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149};
-
-unsigned char data2[150] = { 
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 
-    25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 
-    50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 
-    75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 
-    100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 
-    125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149};
-
-unsigned char data3[150] = { 
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 
-    25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 
-    50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 
-    75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 
-    100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 
-    125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149};
-
-unsigned char data4[150] = { 
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 
-    25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 
-    50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 
-    75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 
-    100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 
-    125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149};
+// Transmission data arrays - one per port
+unsigned char tx_data[MAX_UARTS][150];
 
 typedef struct {
     const char *port;
@@ -76,11 +66,20 @@ typedef struct {
     unsigned char *data;
     size_t size;
     int interval_ms;
-    const char *name;
+    int port_index;
 } uart_config_t;
 
 void signal_handler(int sig) {
     keep_running = 0;
+}
+
+void initialize_data_arrays(void) {
+    // Initialize each port's data array with sequential values
+    for (int port = 0; port < MAX_UARTS; port++) {
+        for (int i = 0; i < 150; i++) {
+            tx_data[port][i] = (unsigned char)i;
+        }
+    }
 }
 
 int set_custom_baudrate(int fd, int baudrate) {
@@ -99,24 +98,25 @@ int set_custom_baudrate(int fd, int baudrate) {
         return -1;
     }
     
-    printf("Custom baud: %d (divisor=%d, base=%d)\n", baudrate, ss.custom_divisor, ss.baud_base);
+    printf("  Custom baud: %d (divisor=%d, base=%d)\n", baudrate, ss.custom_divisor, ss.baud_base);
     return 0;
 }
 
-int open_uart(const char *port, int baudrate) {
-    printf("Opening %s...\n", port);
+int open_uart(const char *port, int baudrate, int port_index) {
+    printf("[Port %d] Opening %s...\n", port_index, port);
     int fd = open(port, O_RDWR | O_NOCTTY);
     if (fd < 0) {
-        fprintf(stderr, "Failed to open %s: %s (errno=%d)\n", port, strerror(errno), errno);
+        fprintf(stderr, "[Port %d] Failed to open %s: %s (errno=%d)\n", 
+                port_index, port, strerror(errno), errno);
         return -1;
     }
-    printf("  Opened successfully (fd=%d)\n", fd);
+    printf("[Port %d]   Opened successfully (fd=%d)\n", port_index, fd);
     
     struct termios tty;
     memset(&tty, 0, sizeof(tty));
     
     if (tcgetattr(fd, &tty) != 0) {
-        perror("tcgetattr");
+        fprintf(stderr, "[Port %d] tcgetattr failed: %s\n", port_index, strerror(errno));
         close(fd);
         return -1;
     }
@@ -131,9 +131,10 @@ int open_uart(const char *port, int baudrate) {
         case 230400:  speed = B230400; break;
         case 460800:  speed = B460800; break;
         case 500000:  speed = B500000; break;
-        // case 512000:  speed = B512000; break;
         case 921600:  speed = B921600; break;
         default:
+            fprintf(stderr, "[Port %d] Unsupported baudrate %d, using 38400\n", 
+                    port_index, baudrate);
             speed = B38400;
             break;
     }
@@ -155,7 +156,7 @@ int open_uart(const char *port, int baudrate) {
     tty.c_iflag &= ~(IXON | IXOFF | IXANY);
     
     if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-        perror("tcsetattr");
+        fprintf(stderr, "[Port %d] tcsetattr failed: %s\n", port_index, strerror(errno));
         close(fd);
         return -1;
     }
@@ -163,24 +164,28 @@ int open_uart(const char *port, int baudrate) {
     // Check if custom baud rate setup is needed (only for non-standard rates)
     if (baudrate != 9600 && baudrate != 19200 && baudrate != 38400 && 
         baudrate != 57600 && baudrate != 115200 && baudrate != 230400 && 
-        baudrate != 460800 && baudrate != 500000 && baudrate != 512000 && 
-        baudrate != 921600) {
+        baudrate != 460800 && baudrate != 500000 && baudrate != 921600) {
         if (set_custom_baudrate(fd, baudrate) < 0) {
             close(fd);
             return -1;
         }
     }
     
+    printf("[Port %d]   Configured @ %d baud\n", port_index, baudrate);
     return fd;
 }
 
 void* uart_transmit_thread(void *arg) {
     uart_config_t *config = (uart_config_t *)arg;
     
-    // Set highest priority
+    // Set highest priority (may require root/CAP_SYS_NICE)
     struct sched_param param;
     param.sched_priority = sched_get_priority_max(SCHED_FIFO);
-    pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
+    if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &param) != 0) {
+        // Not fatal - continue without real-time priority
+        fprintf(stderr, "[Port %d] Warning: Could not set real-time priority\n", 
+                config->port_index);
+    }
     
     struct timespec next_time, interval;
     clock_gettime(CLOCK_MONOTONIC, &next_time);
@@ -189,20 +194,29 @@ void* uart_transmit_thread(void *arg) {
     interval.tv_nsec = (config->interval_ms % 1000) * 1000000L;
     
     unsigned long count = 0;
+    unsigned long errors = 0;
     
-    printf("%s: Starting transmission @ %d baud, %d ms interval\n", 
-           config->name, config->baudrate, config->interval_ms);
+    printf("[Port %d] Starting transmission @ %d baud, %d ms interval\n", 
+           config->port_index, config->baudrate, config->interval_ms);
     
     while (keep_running) {
         // Transmit data
         ssize_t written = write(config->fd, config->data, config->size);
         if (written != (ssize_t)config->size) {
+            errors++;
             if (written < 0) {
-                fprintf(stderr, "%s: write error: %s (errno=%d)\n", 
-                        config->name, strerror(errno), errno);
+                fprintf(stderr, "[Port %d] write error: %s (errno=%d)\n", 
+                        config->port_index, strerror(errno), errno);
+                
+                // If device disconnected, stop this thread
+                if (errno == ENODEV || errno == ENXIO) {
+                    fprintf(stderr, "[Port %d] Device disconnected - stopping thread\n", 
+                            config->port_index);
+                    break;
+                }
             } else {
-                fprintf(stderr, "%s: partial write (wrote %ld of %zu bytes)\n", 
-                        config->name, written, config->size);
+                fprintf(stderr, "[Port %d] partial write (wrote %ld of %zu bytes)\n", 
+                        config->port_index, written, config->size);
             }
         }
         count++;
@@ -219,110 +233,115 @@ void* uart_transmit_thread(void *arg) {
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_time, NULL);
     }
     
-    printf("%s: Transmitted %lu times\n", config->name, count);
+    printf("[Port %d] Transmitted %lu times (%lu errors)\n", 
+           config->port_index, count, errors);
     return NULL;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
     
-    printf("=== UART Continuous Transmitter ===\n");
-    printf("Device: Moxa UPort 1450-G2 (Serial: TBEEB1106908)\n");
-    printf("Configuration (%d UARTs):\n", NUM_UARTS);
+    // Allow runtime override of NUM_UARTS via command line
+    int num_ports = NUM_UARTS;
+    if (argc > 1) {
+        num_ports = atoi(argv[1]);
+        if (num_ports < 1 || num_ports > MAX_UARTS) {
+            fprintf(stderr, "Error: Number of ports must be between 1 and %d\n", MAX_UARTS);
+            return 1;
+        }
+        printf("Using %d ports (specified on command line)\n", num_ports);
+    }
     
-#if NUM_UARTS >= 1
-    printf("  Port 0 (ttyUSB0) @ %d baud, %d ms interval\n", UART1_BAUDRATE, UART1_INTERVAL);
-#endif
-#if NUM_UARTS >= 2
-    printf("  Port 1 (ttyUSB1) @ %d baud, %d ms interval\n", UART2_BAUDRATE, UART2_INTERVAL);
-#endif
-#if NUM_UARTS >= 3
-    printf("  Port 2 (ttyUSB2) @ %d baud, %d ms interval\n", UART3_BAUDRATE, UART3_INTERVAL);
-#endif
-#if NUM_UARTS >= 4
-    printf("  Port 3 (ttyUSB3) @ %d baud, %d ms interval\n", UART4_BAUDRATE, UART4_INTERVAL);
-#endif
+    printf("=== UART Multi-Port Transmitter ===\n");
+    printf("Maximum ports supported: %d\n", MAX_UARTS);
+    printf("Active ports: %d\n\n", num_ports);
+    
+    printf("Port Configuration:\n");
+    for (int i = 0; i < num_ports; i++) {
+        printf("  Port %d: %s @ %d baud, %d ms interval\n", 
+               i, port_configs[i].port, port_configs[i].baudrate, 
+               port_configs[i].interval_ms);
+    }
     printf("\n");
     
-    // Configure UARTs based on NUM_UARTS
-    uart_config_t configs[NUM_UARTS];
+    // Initialize data arrays
+    initialize_data_arrays();
     
-#if NUM_UARTS >= 1
-    configs[0].port = UART1_PORT;
-    configs[0].baudrate = UART1_BAUDRATE;
-    configs[0].fd = -1;
-    configs[0].data = data1;
-    configs[0].size = sizeof(data1);
-    configs[0].interval_ms = UART1_INTERVAL;
-    configs[0].name = "UART1";
-#endif
+    // Allocate configuration structures
+    uart_config_t *configs = (uart_config_t *)malloc(num_ports * sizeof(uart_config_t));
+    if (!configs) {
+        fprintf(stderr, "Failed to allocate memory for configurations\n");
+        return 1;
+    }
     
-#if NUM_UARTS >= 2
-    configs[1].port = UART2_PORT;
-    configs[1].baudrate = UART2_BAUDRATE;
-    configs[1].fd = -1;
-    configs[1].data = data2;
-    configs[1].size = sizeof(data2);
-    configs[1].interval_ms = UART2_INTERVAL;
-    configs[1].name = "UART2";
-#endif
-    
-#if NUM_UARTS >= 3
-    configs[2].port = UART3_PORT;
-    configs[2].baudrate = UART3_BAUDRATE;
-    configs[2].fd = -1;
-    configs[2].data = data3;
-    configs[2].size = sizeof(data3);
-    configs[2].interval_ms = UART3_INTERVAL;
-    configs[2].name = "UART3";
-#endif
-    
-#if NUM_UARTS >= 4
-    configs[3].port = UART4_PORT;
-    configs[3].baudrate = UART4_BAUDRATE;
-    configs[3].fd = -1;
-    configs[3].data = data4;
-    configs[3].size = sizeof(data4);
-    configs[3].interval_ms = UART4_INTERVAL;
-    configs[3].name = "UART4";
-#endif
+    // Configure each UART
+    for (int i = 0; i < num_ports; i++) {
+        configs[i].port = port_configs[i].port;
+        configs[i].baudrate = port_configs[i].baudrate;
+        configs[i].fd = -1;
+        configs[i].data = tx_data[i];
+        configs[i].size = 150;
+        configs[i].interval_ms = port_configs[i].interval_ms;
+        configs[i].port_index = i;
+    }
     
     // Open all UARTs
-    for (int i = 0; i < NUM_UARTS; i++) {
-        configs[i].fd = open_uart(configs[i].port, configs[i].baudrate);
+    printf("Opening ports...\n");
+    for (int i = 0; i < num_ports; i++) {
+        configs[i].fd = open_uart(configs[i].port, configs[i].baudrate, i);
         if (configs[i].fd < 0) {
-            fprintf(stderr, "Failed to open %s\n", configs[i].port);
+            fprintf(stderr, "Failed to open port %d (%s)\n", i, configs[i].port);
             // Close previously opened ports
             for (int j = 0; j < i; j++) {
-                if (configs[j].fd >= 0) close(configs[j].fd);
+                if (configs[j].fd >= 0) {
+                    close(configs[j].fd);
+                }
             }
+            free(configs);
             return 1;
         }
     }
     
-    printf("All UART ports opened successfully\n");
+    printf("\nAll %d ports opened successfully\n", num_ports);
     printf("Press Ctrl+C to stop...\n\n");
     
-    pthread_t threads[NUM_UARTS];
+    // Allocate thread array
+    pthread_t *threads = (pthread_t *)malloc(num_ports * sizeof(pthread_t));
+    if (!threads) {
+        fprintf(stderr, "Failed to allocate memory for threads\n");
+        for (int i = 0; i < num_ports; i++) {
+            if (configs[i].fd >= 0) close(configs[i].fd);
+        }
+        free(configs);
+        return 1;
+    }
     
     // Create transmit threads
-    for (int i = 0; i < NUM_UARTS; i++) {
+    for (int i = 0; i < num_ports; i++) {
         if (pthread_create(&threads[i], NULL, uart_transmit_thread, &configs[i]) != 0) {
-            fprintf(stderr, "Failed to create thread %d\n", i);
+            fprintf(stderr, "Failed to create thread for port %d\n", i);
             keep_running = 0;
         }
     }
     
     // Wait for all threads to complete
-    for (int i = 0; i < NUM_UARTS; i++) {
+    for (int i = 0; i < num_ports; i++) {
         pthread_join(threads[i], NULL);
     }
     
     // Close all ports
-    for (int i = 0; i < NUM_UARTS; i++) {
-        if (configs[i].fd >= 0) close(configs[i].fd);
+    printf("\nClosing ports...\n");
+    for (int i = 0; i < num_ports; i++) {
+        if (configs[i].fd >= 0) {
+            close(configs[i].fd);
+            printf("[Port %d] Closed\n", i);
+        }
     }
+    
+    // Cleanup
+    free(threads);
+    free(configs);
     
     printf("\nTransmission stopped\n");
     return 0;
